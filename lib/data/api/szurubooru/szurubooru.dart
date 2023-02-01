@@ -2,44 +2,56 @@ import 'dart:ui';
 
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shinoni/data/api/booru.dart';
+import 'package:shinoni/data/api/szurubooru/szurubooru_post.dart';
+import 'package:shinoni/data/api/szurubooru/szurubooru_tag.dart';
 
-import '../../util.dart';
-import '../db/db.dart';
-import '../model/post.dart';
-import '../model/tag.dart';
+import '../../../util.dart';
+import '../../db/db.dart';
 
 const limit = 20;
 
-class Moebooru {
+class Szurubooru extends Booru {
   final dio = Dio(BaseOptions());
   final String boardUrl;
+  final String? login;
+  final String? pw;
   final DB db;
   SharedPreferences prefs;
 
   var currentPage = 0;
 
-  Moebooru(this.boardUrl, this.prefs, this.db);
+  Szurubooru(this.boardUrl, this.login, this.pw, this.prefs, this.db);
 
-  Future<List<PostModel>> requestFirstPage({String tag = ''}) {
+  @override
+  Future<List<SzurubooruPost>> requestFirstPage({String tag = ''}) {
     logD('Request first page');
     currentPage = 0;
     return requestNextPage(tag: tag);
   }
 
-  Future<List<PostModel>> requestNextPage({String tag = ''}) {
+  @override
+  Future<List<SzurubooruPost>> requestNextPage({String tag = ''}) {
     logD('Request next page');
     return requestPage(++currentPage, tag);
   }
 
-  Future<List<PostModel>> requestPage(int page, String tags) async {
-    final request = '$boardUrl/post.json?limit=$limit' +
-        ((page > 1) ? '&page=$page' : '') +
+  @override
+  Future<List<SzurubooruPost>> requestPage(int page, String tags) async {
+    final request = '$boardUrl/api/posts?limit=$limit' +
+        ((page > 1) ? '&offset=$page' : '') +
         ((tags != '') ? '&tags=$tags' : '');
 
     logD(request);
-    var res = await dio.get<List<dynamic>>(request);
+    var res = await dio.get<List<dynamic>>(request,
+        options: Options(
+          headers: <String, String>{
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ));
     var posts = (res.data as List<dynamic>)
-        .map((dynamic x) => PostModel.fromJson(x as Map<String, dynamic>))
+        .map((dynamic x) => SzurubooruPost.fromJson(x as Map<String, dynamic>))
         .toList();
 
     if (!prefs.inclSafe) {
@@ -54,6 +66,7 @@ class Moebooru {
     return posts;
   }
 
+  @override
   Future<List<Tag>> requestTags(String tag) async {
     if (tag.length < 3) {
       return [];
@@ -61,9 +74,16 @@ class Moebooru {
     final request = '$boardUrl/tag.json?name=$tag&limit=0';
 
     logD(request);
-    var res = await dio.get<List<dynamic>>(request);
+    var res = await dio.get<List<dynamic>>(request,
+        options: Options(
+          headers: <String, String>{
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ));
     var tags = (res.data as List<dynamic>)
-        .map((dynamic x) => Tag.fromJson(boardUrl, x as Map<String, dynamic>))
+        .map((dynamic x) =>
+            SzurubooruTag.fromJson(boardUrl, x as Map<String, dynamic>))
         .toList();
     _cacheTagColors(tags);
     var copy = tags.toList();
@@ -72,12 +92,13 @@ class Moebooru {
     return tags + copy;
   }
 
-  void _cacheTagColors(List<Tag> tags) {
+  void _cacheTagColors(List<SzurubooruTag> tags) {
     for (final tag in tags) {
       db.storeTagType(tag);
     }
   }
 
+  @override
   Future<Color> requestTagColor(String name) async {
     var fromCache = db.getTagType(name);
     if (fromCache == null) {

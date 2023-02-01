@@ -1,5 +1,6 @@
+import '../booru.dart';
 
-class PostModel {
+class MoebooruPost extends Post {
   late int id;
   late List<String> tags;
   int? createdAt;
@@ -31,13 +32,13 @@ class PostModel {
   int? parentId;
   String? status;
   bool? isPending;
-  int? width;
-  int? height;
+  late int width;
+  late int height;
   bool? isHeld;
   int? lastNotedAt;
   int? lastCommentedAt;
 
-  PostModel.fromJson(Map<String, dynamic> json) {
+  MoebooruPost.fromJson(Map<String, dynamic> json) {
     id = json['id'] as int;
     tags = (json['tags'] as String).split(' ');
     createdAt = json['created_at'] as int?;
@@ -69,8 +70,8 @@ class PostModel {
     parentId = json['parent_id'] as int?;
     status = json['status'] as String?;
     isPending = json['is_pending'] as bool?;
-    width = json['width'] as int?;
-    height = json['height'] as int?;
+    width = json['width'] as int;
+    height = json['height'] as int;
     isHeld = json['is_held'] as bool?;
     lastNotedAt = json['last_noted_at'] as int?;
     lastCommentedAt = json[' last_commented_at'] as int?;

@@ -3,8 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:shinoni/presentation/post_details_page.dart';
 
-import '../data/model/tag.dart';
-import '../data/api/moebooru.dart';
+import '../data/api/booru.dart';
 import '../logic/navigation_bloc.dart';
 import '../util.dart';
 
@@ -30,7 +29,7 @@ class _SearchPageState extends State<SearchPage> {
                 decoration: InputDecoration(border: OutlineInputBorder()),
               ),
               suggestionsCallback: (pattern) async {
-                return await context.moebooru.requestTags(pattern);
+                return await context.boardDelegator.requestTags(pattern);
               },
               itemBuilder: (context, suggestion) {
                 Tag tag = suggestion as Tag;
@@ -53,7 +52,7 @@ class _SearchPageState extends State<SearchPage> {
               ),
             ),
             ...context.db.getAllFavTags().map(
-                  (e) => TagLabel(e, context.moebooru),
+                  (e) => TagLabel(e, context.boardDelegator),
                 )
           ],
         ),

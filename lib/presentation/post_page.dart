@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
-import '../data/model/post.dart';
+import '../data/api/booru.dart';
 import '../logic/navigation_bloc.dart';
 import '../util.dart';
 
@@ -66,10 +66,10 @@ class _AsyncImageWidgetState extends State<AsyncImageWidget> {
   }
 
   static const double placeholderHeight = 500;
-  PostModel? data;
+  Post? data;
 
   void load(Function onLoad) async {
-    data = (await onLoad()) as PostModel?;
+    data = (await onLoad()) as Post?;
     if (data == null) {
       logD('post loading failed');
     }
@@ -92,7 +92,7 @@ class _AsyncImageWidgetState extends State<AsyncImageWidget> {
 
 Widget _buildPostImage(
   BuildContext context,
-  PostModel data,
+  Post data,
   int index,
   double Function() scrollPosGetter,
 ) =>

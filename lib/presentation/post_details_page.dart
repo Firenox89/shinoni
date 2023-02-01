@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:shinoni/data/api/moebooru.dart';
+import 'package:shinoni/data/api/board_delegator.dart';
 
-import '../data/model/post.dart';
+import '../data/api/booru.dart';
 import '../logic/navigation_bloc.dart';
 import '../util.dart';
 
 class PostDetailsPage extends StatelessWidget {
-  final SelfPopulatingList<PostModel> postList;
+  final SelfPopulatingList<Post> postList;
   final int startIndex;
 
   const PostDetailsPage(this.postList, this.startIndex, {Key? key})
@@ -85,7 +85,7 @@ class PostDetailsPage extends StatelessWidget {
             children: left
                 .map((e) => Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: TagLabel(e, context.moebooru),
+                      child: TagLabel(e, context.boardDelegator),
                     ))
                 .toList(),
           ),
@@ -93,7 +93,7 @@ class PostDetailsPage extends StatelessWidget {
             children: right
                 .map((e) => Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: TagLabel(e, context.moebooru),
+                      child: TagLabel(e, context.boardDelegator),
                     ))
                 .toList(),
           ),
@@ -106,26 +106,26 @@ class PostDetailsPage extends StatelessWidget {
 class TagLabel extends StatefulWidget {
   final String name;
 
-  final Moebooru moebooru;
+  final BoardDelegator boardDelegator;
 
-  const TagLabel(this.name, this.moebooru, {Key? key}) : super(key: key);
+  const TagLabel(this.name, this.boardDelegator, {Key? key}) : super(key: key);
 
   @override
-  _TagLabelState createState() => _TagLabelState(name, moebooru);
+  _TagLabelState createState() => _TagLabelState(name, boardDelegator);
 }
 
 class _TagLabelState extends State<TagLabel> {
   final String name;
-  final Moebooru moebooru;
+  final BoardDelegator boardDelegator;
   Color? color;
   bool isFav = false;
 
-  _TagLabelState(this.name, this.moebooru) {
+  _TagLabelState(this.name, this.boardDelegator) {
     _loadData();
   }
 
   void _loadData() async {
-    color = await moebooru.requestTagColor(name);
+    color = await boardDelegator.requestTagColor(name);
     setState(() {});
   }
 

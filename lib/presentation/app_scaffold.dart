@@ -18,9 +18,6 @@ class AppScaffold extends StatelessWidget {
         mainBloc.add(OpenSearch());
         break;
       case 2:
-        mainBloc.add(OpenBoards());
-        break;
-      case 3:
         mainBloc.add(OpenSettings());
         break;
     }
@@ -49,10 +46,6 @@ class AppScaffold extends StatelessWidget {
             BottomNavigationBarItem(
               label: 'Search',
               icon: Icon(Icons.search),
-            ),
-            BottomNavigationBarItem(
-              label: 'Boards',
-              icon: Icon(Icons.grid_view),
             ),
             BottomNavigationBarItem(
               label: 'Settings',

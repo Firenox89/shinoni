@@ -30,7 +30,6 @@ class Loading extends NavigationState {
   Loading(this.msg, this.navBarIndex);
 }
 
-@immutable
 class PostPageLoaded extends NavigationState implements CanGoBack {
   @override
   final String title;
@@ -41,7 +40,7 @@ class PostPageLoaded extends NavigationState implements CanGoBack {
 
   double scrollOffset;
 
-  final SelfPopulatingList<PostModel> postList;
+  final SelfPopulatingList<Post> postList;
   final int columnCount = 3;
 
   PostPageLoaded(this.title, this.postList, this.lastState, {this.scrollOffset = 0});
@@ -56,11 +55,15 @@ class SearchState extends NavigationState {
 }
 
 class SettingsState extends NavigationState {
+  SettingsState(this.boardList);
+
   @override
-  int get navBarIndex => 3;
+  int get navBarIndex => 2;
 
   @override
   String get title => 'Settings';
+
+  final List<BoardData> boardList;
 }
 
 @immutable
@@ -74,7 +77,7 @@ class PostDetailsState extends NavigationState implements CanGoBack {
 
   final int initialIndex;
 
-  final SelfPopulatingList<PostModel> postList;
+  final SelfPopulatingList<Post> postList;
 
   PostDetailsState(this.title, this.postList, this.initialIndex, this.lastState);
 

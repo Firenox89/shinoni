@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shinoni/data/api/board_delegator.dart';
 import 'package:shinoni/data/db/db.dart';
 
-import '../data/model/post.dart';
-import '../util.dart';
-import '../data/api/moebooru.dart';
+import '../data/api/booru.dart';
 
 part 'navigation_event.dart';
 
@@ -16,9 +15,9 @@ part 'navigation_state.dart';
 class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
   final SharedPreferences prefs;
   final DB db;
-  final Moebooru yandere;
+  final BoardDelegator boardDelegator;
 
-  NavigationBloc(this.prefs, this.db, this.yandere)
+  NavigationBloc(this.prefs, this.db, this.boardDelegator)
       : super(NavigationInitial()) {
     on<NavigationEvent>((event, emit) async {
       if (event is OpenPosts) {
@@ -27,7 +26,15 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
       } else if (event is OpenSearch) {
         emit(SearchState());
       } else if (event is OpenSettings) {
-        emit(SettingsState());
+        emit(SettingsState(db.getBoardList()));
+      } else if (event is AddBoardEvent) {
+        db.addBoard(
+            BoardData(event.type, event.url, login: event.login, pw: event.pw));
+        emit(SettingsState(db.getBoardList()));
+      } else if (event is SelectBoardEvent) {
+        boardDelegator.select(event.boardUrl);
+      } else if (event is RemoveBoardEvent) {
+        db.removeBoard(event.boardUrl);
       } else if (event is SearchEvent) {
         NavigationState? lastState;
         if (state is PostDetailsState) {
@@ -39,7 +46,8 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
       } else if (event is OpenPostDetails) {
         final cState = state as PostPageLoaded;
         cState.scrollOffset = event.scrollOffset;
-        emit(PostDetailsState(state.title, cState.postList, event.postIndex, state));
+        emit(PostDetailsState(
+            state.title, cState.postList, event.postIndex, state));
       }
     });
   }
@@ -49,12 +57,13 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
     NavigationState? prevState,
     double scrollOffset = 0,
   }) async {
-    SelfPopulatingList<PostModel> list = SelfPopulatingList(
-      await yandere.requestFirstPage(tag: tag),
-      () => yandere.requestNextPage(tag: tag),
+    SelfPopulatingList<Post> list = SelfPopulatingList(
+      await boardDelegator.requestFirstPage(tag: tag),
+      () => boardDelegator.requestNextPage(tag: tag),
       3,
     );
-    return PostPageLoaded('yande.re $tag', list, prevState, scrollOffset: scrollOffset);
+    return PostPageLoaded('yande.re $tag', list, prevState,
+        scrollOffset: scrollOffset);
   }
 }
 

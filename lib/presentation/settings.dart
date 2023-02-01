@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shinoni/data/db/db.dart';
+
+import '../logic/navigation_bloc.dart';
 import '../util.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -11,9 +15,20 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   SharedPreferences? prefs;
+  final boardUrlController = TextEditingController();
+  final loginController = TextEditingController();
+  final pwController = TextEditingController();
+  APIType selectedApiType = APIType.moebooru;
 
   _SettingsPageState() {
     _loadSettings();
+  }
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is disposed.
+    boardUrlController.dispose();
+    super.dispose();
   }
 
   void _loadSettings() async {
@@ -31,39 +46,138 @@ class _SettingsPageState extends State<SettingsPage> {
     if (prefs == null) {
       return Center(child: Text('Loading Settings'));
     }
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Text('Content Rating'),
-          Divider(),
-          _buildCheckboxRow(
-            'Safe Content',
-            prefs!.inclSafe,
-            (value) {
-              prefs!.inclSafe = value!;
-              setState(() {});
-            },
-          ),
-          _buildCheckboxRow(
-            'Questionable Content',
-            prefs!.inclQuestionable,
-            (value) {
-              prefs!.inclQuestionable = value!;
-              setState(() {});
-            },
-          ),
-          _buildCheckboxRow(
-            'Explicit Content',
-            prefs!.inclExplicit,
-            (value) {
-              prefs!.inclExplicit = value!;
-              setState(() {});
-            },
-          ),
-          Divider(),
-        ],
+    return BlocBuilder<NavigationBloc, NavigationState>(
+      builder: (context, state) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Text('Content Rating'),
+            Divider(),
+            _buildContentRating(),
+            Divider(),
+            Text('Boards'),
+            Divider(),
+            _buildBoardList(context.mainBloc, state as SettingsState),
+            Divider(),
+            Text('Add Board'),
+            Divider(),
+            _buildBoardAdder(context.mainBloc)
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildBoardList(NavigationBloc bloc, SettingsState state) {
+    return Column(
+        children: state.boardList
+            .map<Widget>(
+              (e) => GestureDetector(
+                onTap: () {
+                  bloc.add(SelectBoardEvent(e.baseUrl));
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      Text(e.baseUrl),
+                      ElevatedButton(
+                          onPressed: () {
+                            bloc.add(RemoveBoardEvent(e.baseUrl));
+                          },
+                          child: Text('Remove')),
+                    ],
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ),
+                ),
+              ),
+            )
+            .toList());
+  }
+
+  Widget _buildBoardAdder(NavigationBloc bloc) {
+    return Column(
+      children: [
+        TextField(
+          controller: boardUrlController,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(),
+            hintText: 'BoardUrl',
+          ),
+        ),
+        TextField(
+          controller: loginController,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(),
+            hintText: 'Login',
+          ),
+        ),
+        TextField(
+          controller: pwController,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(),
+            hintText: 'pw',
+          ),
+        ),
+        DropdownButton<APIType>(
+          value: selectedApiType,
+          items: APIType.values.map((APIType value) {
+            return DropdownMenuItem<APIType>(
+              value: value,
+              child: Text(value.name),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              selectedApiType = value;
+              setState(() {});
+            }
+          },
+        ),
+        ElevatedButton(
+            onPressed: () {
+              bloc.add(
+                AddBoardEvent(
+                  selectedApiType,
+                  boardUrlController.text,
+                  loginController.text,
+                  pwController.text,
+                ),
+              );
+            },
+            child: Text('Add')),
+      ],
+    );
+  }
+
+  Widget _buildContentRating() {
+    return Column(
+      children: [
+        _buildCheckboxRow(
+          'Safe Content',
+          prefs!.inclSafe,
+          (value) {
+            prefs!.inclSafe = value!;
+            setState(() {});
+          },
+        ),
+        _buildCheckboxRow(
+          'Questionable Content',
+          prefs!.inclQuestionable,
+          (value) {
+            prefs!.inclQuestionable = value!;
+            setState(() {});
+          },
+        ),
+        _buildCheckboxRow(
+          'Explicit Content',
+          prefs!.inclExplicit,
+          (value) {
+            prefs!.inclExplicit = value!;
+            setState(() {});
+          },
+        ),
+      ],
     );
   }
 

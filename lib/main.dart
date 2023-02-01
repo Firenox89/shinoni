@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shinoni/data/api/moebooru.dart';
+import 'package:shinoni/data/api/board_delegator.dart';
+import 'package:shinoni/data/api/booru.dart';
+import 'package:shinoni/data/api/moebooru/moebooru.dart';
 import 'package:shinoni/logic/navigation_bloc.dart';
 import 'package:shinoni/presentation/app_scaffold.dart';
 import 'package:shinoni/presentation/post_details_page.dart';
@@ -18,13 +20,20 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final db = DB();
   await db.init();
-  final yandere = Moebooru('https://yande.re', prefs, db);
-  final navBloc = NavigationBloc(prefs, db, yandere);
+
+  if (db.getBoardList().isEmpty) {
+    db.addBoard(BoardData(APIType.moebooru, 'https://yande.re'));
+    db.addBoard(BoardData(APIType.moebooru, 'https://konachan.com'));
+  }
+
+  final boardDelegator = BoardDelegator(prefs, db);
+
+  final navBloc = NavigationBloc(prefs, db, boardDelegator);
 
   runApp(
     MultiRepositoryProvider(
       providers: [
-        RepositoryProvider.value(value: yandere),
+        RepositoryProvider.value(value: boardDelegator),
         RepositoryProvider.value(value: db)
       ],
       child: BlocProvider(
