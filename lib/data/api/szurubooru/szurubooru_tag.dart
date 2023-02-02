@@ -4,19 +4,13 @@ import '../booru.dart';
 
 class SzurubooruTag extends Tag {
   final String board;
+  final String name;
+  final int type;
 
   @override
-  // TODO: implement color
-  Color get color => throw UnimplementedError();
+  Color get color => getColorForType(type);
 
-  @override
-  // TODO: implement name
-  String get name => throw UnimplementedError();
-
-  @override
-  // TODO: implement type
-  int get type => throw UnimplementedError();
-
-  SzurubooruTag.fromJson(this.board, Map<String, dynamic> json) {
-  }
+  SzurubooruTag.fromJson(this.board, Map<String, dynamic> json)
+      : name = json['names'][0] as String,
+        type = int.parse(json['category'] as String);
 }

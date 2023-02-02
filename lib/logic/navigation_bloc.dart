@@ -32,7 +32,10 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
             BoardData(event.type, event.url, login: event.login, pw: event.pw));
         emit(SettingsState(db.getBoardList()));
       } else if (event is SelectBoardEvent) {
+        emit(Loading('Loading Posts', 0));
         boardDelegator.select(event.boardUrl);
+        prefs.setString('selectedBoard', event.boardUrl);
+        emit(await _loadFistPage());
       } else if (event is RemoveBoardEvent) {
         db.removeBoard(event.boardUrl);
       } else if (event is SearchEvent) {
@@ -42,7 +45,9 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
         }
         emit(await _loadFistPage(tag: event.tag, prevState: lastState));
       } else if (event is GoBackEvent) {
-        emit((state as CanGoBack).lastState!);
+        if ((state as CanGoBack).lastState != null) {
+          emit((state as CanGoBack).lastState!);
+        }
       } else if (event is OpenPostDetails) {
         final cState = state as PostPageLoaded;
         cState.scrollOffset = event.scrollOffset;

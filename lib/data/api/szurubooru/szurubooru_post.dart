@@ -1,54 +1,40 @@
+import 'package:shinoni/data/api/szurubooru/szurubooru_tag.dart';
+
 import '../booru.dart';
 
 class SzurubooruPost extends Post {
-  @override
-  // TODO: implement fileSize
-  int get fileSize => throw UnimplementedError();
+  final String board;
+  late int id;
+  late List<SzurubooruTag> szuruTags;
+  late int fileSize;
+  late String fileUrl;
+  late String previewUrl;
+  late int previewWidth;
+  late int previewHeight;
+  late String sampleUrl;
+  late int sampleWidth;
+  late int sampleHeight;
+  late String rating;
+  late int width;
+  late int height;
 
-  @override
-  // TODO: implement height
-  int get height => throw UnimplementedError();
+  List<String> get tags => szuruTags.map((e) => e.name).toList();
 
-  @override
-  // TODO: implement id
-  int get id => throw UnimplementedError();
-
-  @override
-  // TODO: implement previewHeight
-  int get previewHeight => throw UnimplementedError();
-
-  @override
-  // TODO: implement previewUrl
-  String get previewUrl => throw UnimplementedError();
-
-  @override
-  // TODO: implement previewWidth
-  int get previewWidth => throw UnimplementedError();
-
-  @override
-  // TODO: implement rating
-  String get rating => throw UnimplementedError();
-
-  @override
-  // TODO: implement sampleHeight
-  int get sampleHeight => throw UnimplementedError();
-
-  @override
-  // TODO: implement sampleUrl
-  String get sampleUrl => throw UnimplementedError();
-
-  @override
-  // TODO: implement sampleWidth
-  int get sampleWidth => throw UnimplementedError();
-
-  @override
-  // TODO: implement tags
-  List<String> get tags => throw UnimplementedError();
-
-  @override
-  // TODO: implement width
-  int get width => throw UnimplementedError();
-
-  SzurubooruPost.fromJson(Map<String, dynamic> json) {
-  }
+  SzurubooruPost.fromJson(this.board, Map<String, dynamic> json)
+      : id = json['id'] as int,
+        szuruTags = (json['tags'] as List<dynamic>)
+            .map((dynamic e) =>
+                SzurubooruTag.fromJson(board, e as Map<String, dynamic>))
+            .toList(),
+        fileSize = json['fileSize'] as int,
+        fileUrl = board + (json['contentUrl'] as String),
+        previewUrl = board + (json['thumbnailUrl'] as String),
+        previewWidth = json['canvasWidth'] as int,
+        previewHeight = json['canvasHeight'] as int,
+        sampleUrl = board + (json['contentUrl'] as String),
+        sampleWidth = json['canvasWidth'] as int,
+        sampleHeight = json['canvasHeight'] as int,
+        rating = json['safety'] as String,
+        height = json['canvasHeight'] as int,
+        width = json['canvasWidth'] as int;
 }

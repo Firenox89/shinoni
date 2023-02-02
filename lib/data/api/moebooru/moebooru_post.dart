@@ -12,7 +12,7 @@ class MoebooruPost extends Post {
   String? md5;
   late int fileSize;
   String? fileExt;
-  String? fileUrl;
+  late String fileUrl;
   bool? isShownInIndex;
   late String previewUrl;
   late int previewWidth;
@@ -50,7 +50,7 @@ class MoebooruPost extends Post {
     md5 = json['md5'] as String?;
     fileSize = json['file_size'] as int;
     fileExt = json['file_ext'] as String?;
-    fileUrl = json['file_url'] as String?;
+    fileUrl = json['file_url'] as String;
     isShownInIndex = json['is_shown_in_index'] as bool?;
     previewUrl = json['preview_url'] as String;
     previewWidth = json['preview_width'] as int;

@@ -27,7 +27,14 @@ class BoardDelegator extends Booru {
               }
             })
             .toList()
-            .asMap();
+            .asMap() {
+    final selectedUrl = prefs.getString('selectedBoard');
+    boards.forEach((index, value) {
+      if (value.boardUrl == selectedUrl) {
+        currentSelectedBoard = index;
+      }
+    });
+  }
 
   @override
   Future<List<Post>> requestFirstPage({String tag = ''}) {

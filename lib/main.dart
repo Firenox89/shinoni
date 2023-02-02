@@ -9,6 +9,7 @@ import 'package:shinoni/presentation/app_scaffold.dart';
 import 'package:shinoni/presentation/post_details_page.dart';
 import 'package:shinoni/presentation/search_page.dart';
 import 'package:shinoni/presentation/settings.dart';
+import 'package:shinoni/util.dart';
 import 'package:yaru/yaru.dart' as yaru;
 
 import 'data/db/db.dart';
@@ -21,9 +22,12 @@ void main() async {
   final db = DB();
   await db.init();
 
-  if (db.getBoardList().isEmpty) {
+  if (db
+      .getBoardList()
+      .isEmpty) {
     db.addBoard(BoardData(APIType.moebooru, 'https://yande.re'));
     db.addBoard(BoardData(APIType.moebooru, 'https://konachan.com'));
+    prefs.setString('selectedBoard', 'https://yande.re');
   }
 
   final boardDelegator = BoardDelegator(prefs, db);
@@ -64,7 +68,14 @@ class NavWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       child: BlocBuilder<NavigationBloc, NavigationState>(
-        builder: (context, state) => _buildBody(context, state),
+          builder: (context, state) =>
+              WillPopScope(
+                child: _buildBody(context, state),
+                onWillPop: () async {
+                  context.mainBloc.add(GoBackEvent());
+                  return false;
+                },
+              )
       ),
     );
   }

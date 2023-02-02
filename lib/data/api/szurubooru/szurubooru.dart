@@ -17,6 +17,7 @@ class Szurubooru extends Booru {
   final String? login;
   final String? pw;
   final DB db;
+  final List<SzurubooruTag> tagCache = [];
   SharedPreferences prefs;
 
   var currentPage = 0;
@@ -39,20 +40,29 @@ class Szurubooru extends Booru {
   @override
   Future<List<SzurubooruPost>> requestPage(int page, String tags) async {
     final request = '$boardUrl/api/posts?limit=$limit' +
-        ((page > 1) ? '&offset=$page' : '') +
+        ((page > 1) ? '&offset=${page * limit}' : '') +
         ((tags != '') ? '&tags=$tags' : '');
 
     logD(request);
-    var res = await dio.get<List<dynamic>>(request,
+    var res = await dio.get<Map<String, dynamic>>(request,
         options: Options(
           headers: <String, String>{
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
         ));
-    var posts = (res.data as List<dynamic>)
-        .map((dynamic x) => SzurubooruPost.fromJson(x as Map<String, dynamic>))
+    var posts = ((res.data as Map<String, dynamic>)['results'] as List<dynamic>)
+        .map((dynamic x) =>
+            SzurubooruPost.fromJson(boardUrl, x as Map<String, dynamic>))
         .toList();
+
+    for (final post in posts) {
+      for (final tag in post.szuruTags) {
+        if (!tagCache.contains(tag)) {
+          tagCache.add(tag);
+        }
+      }
+    }
 
     if (!prefs.inclSafe) {
       posts.removeWhere((post) => post.rating == 's');
@@ -71,6 +81,8 @@ class Szurubooru extends Booru {
     if (tag.length < 3) {
       return [];
     }
+    tagCache.firstWhere((element) => element.name == tag);
+
     final request = '$boardUrl/tag.json?name=$tag&limit=0';
 
     logD(request);
@@ -85,26 +97,14 @@ class Szurubooru extends Booru {
         .map((dynamic x) =>
             SzurubooruTag.fromJson(boardUrl, x as Map<String, dynamic>))
         .toList();
-    _cacheTagColors(tags);
     var copy = tags.toList();
     copy.removeWhere((element) => element.name.startsWith(tag));
     tags.removeWhere((element) => !element.name.startsWith(tag));
     return tags + copy;
   }
 
-  void _cacheTagColors(List<SzurubooruTag> tags) {
-    for (final tag in tags) {
-      db.storeTagType(tag);
-    }
-  }
-
   @override
   Future<Color> requestTagColor(String name) async {
-    var fromCache = db.getTagType(name);
-    if (fromCache == null) {
-      await requestTags(name);
-      fromCache = db.getTagType(name);
-    }
-    return getColorForType(fromCache!);
+    return tagCache.firstWhere((element) => element.name == name).color;
   }
 }
