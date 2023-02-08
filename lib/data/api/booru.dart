@@ -1,40 +1,60 @@
 import 'dart:ui';
 
 abstract class Post {
-  int get id;
+  List<Tag> get tags;
 
-  List<String> get tags;
+  String get board;
 
-  int get fileSize;
+  String get fileUrl;
 
   String get previewUrl;
 
-  int get previewWidth;
-
-  int get previewHeight;
+  String get rating;
 
   String get sampleUrl;
 
-  int get sampleWidth;
+  String? get source;
+
+  int get fileSize;
+
+  int get height;
+
+  int get id;
+
+  int get previewHeight;
+
+  int get previewWidth;
 
   int get sampleHeight;
 
-  String get rating;
+  int get sampleWidth;
 
   int get width;
-
-  int get height;
 }
 
 abstract class Tag {
   String get name;
-  int get type;
-  Color get color;
 
+  Future<int> get type;
+
+  Future<Color> get color => getColorForType(type);
 }
 
-Color getColorForType(int type) {
-  switch (type) {
+class OfflineTag extends Tag {
+  @override
+  final String name;
+  final int loadedType;
+
+  @override
+  Future<int> get type => Future.value(loadedType);
+
+  OfflineTag(this.name, this.loadedType);
+}
+
+Future<Color> getColorForType(Future<int> type) async {
+  switch (await type) {
+    case -1:
+      return Color(0xFF000000);
     case 0:
       return Color(0xFFEE8887);
     case 1:
@@ -55,6 +75,12 @@ Color getColorForType(int type) {
 abstract class Booru {
   String get boardUrl;
 
+  bool get hasLogin => false;
+
+  bool get canSave => false;
+
+  bool get canDelete => false;
+
   Future<List<Post>> requestFirstPage({String tag = ''});
 
   Future<List<Post>> requestNextPage({String tag = ''});
@@ -63,5 +89,7 @@ abstract class Booru {
 
   Future<List<Tag>> requestTags(String tag);
 
-  Future<Color> requestTagColor(String name);
+  Future<void> savePost(Post post);
+
+  Future<void> deletePost(Post post);
 }

@@ -47,9 +47,8 @@ class DB {
     _boardDataBox = await Hive.openBox<BoardData>('boardData');
   }
 
-  void storeTagType(Tag tag) {
-    logD('store tag type "${tag.name}"');
-    _tagTypesBox.put(tag.name, tag.type);
+  Future<void> storeTagType(Tag tag) async {
+    _tagTypesBox.put(tag.name, await tag.type);
   }
 
   int? getTagType(String name) {
@@ -80,9 +79,15 @@ class DB {
     _boardDataBox.add(boardData);
   }
 
-  void removeBoard(String boardUrl) {
-    final board = _boardDataBox.values
-        .firstWhere((element) => element.baseUrl == boardUrl);
-    _boardDataBox.delete(board);
+  Future<void> removeBoard(String boardUrl) async {
+    var index = 0;
+    for (final board in _boardDataBox.values) {
+      if (board.baseUrl == boardUrl) {
+        logD('remove board ' + boardUrl);
+        logD('board ' + board.toString());
+        await _boardDataBox.deleteAt(index);
+      }
+      index++;
+    }
   }
 }

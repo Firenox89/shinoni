@@ -1,13 +1,16 @@
+import 'package:shinoni/data/api/moebooru/moebooru_tag.dart';
+
 import '../booru.dart';
 
 class MoebooruPost extends Post {
+  final String board;
   late int id;
-  late List<String> tags;
+  late List<MoebooruTag> tags;
   int? createdAt;
   int? updatedAt;
   int? creatorId;
   String? author;
-  String? source;
+  late String? source;
   int? score;
   String? md5;
   late int fileSize;
@@ -38,9 +41,9 @@ class MoebooruPost extends Post {
   int? lastNotedAt;
   int? lastCommentedAt;
 
-  MoebooruPost.fromJson(Map<String, dynamic> json) {
+  MoebooruPost.fromJson(this.board, Function typeLoader, Map<String, dynamic> json) {
     id = json['id'] as int;
-    tags = (json['tags'] as String).split(' ');
+    tags = (json['tags'] as String).split(' ').map((name) => MoebooruTag(name, typeLoader)).toList();
     createdAt = json['created_at'] as int?;
     updatedAt = json['updated_at'] as int?;
     creatorId = json['creator_id'] as int?;

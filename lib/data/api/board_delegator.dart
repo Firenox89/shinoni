@@ -14,6 +14,12 @@ class BoardDelegator extends Booru {
   Map<int, Booru> boards;
   int currentSelectedBoard = 0;
 
+  @override
+  bool get canSave => boards.values.any((element) => element.hasLogin);
+
+  @override
+  bool get canDelete => boards[currentSelectedBoard]!.hasLogin;
+
   BoardDelegator(this.prefs, this.db)
       : boards = db
             .getBoardList()
@@ -52,11 +58,6 @@ class BoardDelegator extends Booru {
   }
 
   @override
-  Future<Color> requestTagColor(String name) {
-    return boards[currentSelectedBoard]!.requestTagColor(name);
-  }
-
-  @override
   Future<List<Tag>> requestTags(String tag) {
     return boards[currentSelectedBoard]!.requestTags(tag);
   }
@@ -72,4 +73,12 @@ class BoardDelegator extends Booru {
 
   @override
   String get boardUrl => boards[currentSelectedBoard]!.boardUrl;
+
+  @override
+  Future<void> savePost(Post post) async =>
+      boards.values.firstWhere((element) => element.hasLogin).savePost(post);
+
+  @override
+  Future<void> deletePost(Post post) async =>
+      boards.values.firstWhere((element) => element.hasLogin).deletePost(post);
 }

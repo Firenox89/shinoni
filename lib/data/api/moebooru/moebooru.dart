@@ -1,6 +1,5 @@
-import 'dart:ui';
-
 import 'package:dio/dio.dart';
+import 'package:dio_throttler/dio_throttler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shinoni/data/api/booru.dart';
 
@@ -12,7 +11,7 @@ import 'moebooru_tag.dart';
 const limit = 20;
 
 class Moebooru extends Booru {
-  final dio = Dio(BaseOptions());
+  late Dio dio;
   @override
   final String boardUrl;
   final DB db;
@@ -20,7 +19,12 @@ class Moebooru extends Booru {
 
   var currentPage = 0;
 
-  Moebooru(this.boardUrl, this.prefs, this.db);
+  Moebooru(this.boardUrl, this.prefs, this.db) {
+    dio = Dio(BaseOptions(
+      baseUrl: boardUrl,
+    ));
+    dio.interceptors.add(DioThrottler(Duration(milliseconds: 300)));
+  }
 
   @override
   Future<List<MoebooruPost>> requestFirstPage({String tag = ''}) {
@@ -37,14 +41,16 @@ class Moebooru extends Booru {
 
   @override
   Future<List<MoebooruPost>> requestPage(int page, String tags) async {
-    final request = '$boardUrl/post.json?limit=$limit' +
+    final request = '/post.json?limit=$limit' +
         ((page > 1) ? '&page=$page' : '') +
         ((tags != '') ? '&tags=$tags' : '');
 
     logD(request);
     var res = await dio.get<List<dynamic>>(request);
     var posts = (res.data as List<dynamic>)
-        .map((dynamic x) => MoebooruPost.fromJson(x as Map<String, dynamic>))
+        .map((dynamic x) => MoebooruPost.fromJson(boardUrl, (String name) {
+              return requestTagType(name);
+            }, x as Map<String, dynamic>))
         .toList();
 
     if (!prefs.inclSafe) {
@@ -64,33 +70,44 @@ class Moebooru extends Booru {
     if (tag.length < 3) {
       return [];
     }
-    final request = '$boardUrl/tag.json?name=$tag&limit=0';
+    logD('request tag: ' + tag);
+    final request = '/tag.json?name=$tag&limit=0';
 
-    logD(request);
     var res = await dio.get<List<dynamic>>(request);
     var tags = (res.data as List<dynamic>)
-        .map((dynamic x) => MoebooruTag.fromJson(boardUrl, x as Map<String, dynamic>))
+        .map((dynamic x) => MoebooruTag.fromJson(x as Map<String, dynamic>))
         .toList();
-    _cacheTagColors(tags);
+    await _cacheTagColors(tags);
     var copy = tags.toList();
     copy.removeWhere((element) => element.name.startsWith(tag));
     tags.removeWhere((element) => !element.name.startsWith(tag));
     return tags + copy;
   }
 
-  void _cacheTagColors(List<MoebooruTag> tags) {
+  Future<void> _cacheTagColors(List<MoebooruTag> tags) async {
     for (final tag in tags) {
-      db.storeTagType(tag);
+      await db.storeTagType(tag);
     }
   }
 
-  @override
-  Future<Color> requestTagColor(String name) async {
+  Future<int> requestTagType(String name) async {
     var fromCache = db.getTagType(name);
     if (fromCache == null) {
       await requestTags(name);
       fromCache = db.getTagType(name);
     }
-    return getColorForType(fromCache!);
+    return fromCache!;
+  }
+
+  @override
+  Future<void> savePost(Post post) {
+    // TODO: implement savePost
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> deletePost(Post post) {
+    // TODO: implement deletePost
+    throw UnimplementedError();
   }
 }

@@ -1,10 +1,9 @@
-import 'dart:ui';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shinoni/data/api/booru.dart';
 import 'package:shinoni/data/api/szurubooru/szurubooru_post.dart';
-import 'package:shinoni/data/api/szurubooru/szurubooru_tag.dart';
 
 import '../../../util.dart';
 import '../../db/db.dart';
@@ -12,17 +11,29 @@ import '../../db/db.dart';
 const limit = 20;
 
 class Szurubooru extends Booru {
-  final dio = Dio(BaseOptions());
+  @override
   final String boardUrl;
   final String? login;
   final String? pw;
   final DB db;
-  final List<SzurubooruTag> tagCache = [];
+  late Dio dio;
   SharedPreferences prefs;
+
+  @override
+  bool get hasLogin => login != null;
 
   var currentPage = 0;
 
-  Szurubooru(this.boardUrl, this.login, this.pw, this.prefs, this.db);
+  Szurubooru(this.boardUrl, this.login, this.pw, this.prefs, this.db) {
+    dio = Dio(BaseOptions(
+      baseUrl: boardUrl,
+      headers: <String, String>{
+        'Authorization': 'Basic ' + base64.encode(utf8.encode('$login:$pw')),
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ));
+  }
 
   @override
   Future<List<SzurubooruPost>> requestFirstPage({String tag = ''}) {
@@ -39,30 +50,17 @@ class Szurubooru extends Booru {
 
   @override
   Future<List<SzurubooruPost>> requestPage(int page, String tags) async {
-    final request = '$boardUrl/api/posts?limit=$limit' +
+    final request = '/api/posts?limit=$limit' +
         ((page > 1) ? '&offset=${page * limit}' : '') +
         ((tags != '') ? '&tags=$tags' : '');
 
     logD(request);
-    var res = await dio.get<Map<String, dynamic>>(request,
-        options: Options(
-          headers: <String, String>{
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ));
+
+    var res = await _getRequest(request);
     var posts = ((res.data as Map<String, dynamic>)['results'] as List<dynamic>)
         .map((dynamic x) =>
             SzurubooruPost.fromJson(boardUrl, x as Map<String, dynamic>))
         .toList();
-
-    for (final post in posts) {
-      for (final tag in post.szuruTags) {
-        if (!tagCache.contains(tag)) {
-          tagCache.add(tag);
-        }
-      }
-    }
 
     if (!prefs.inclSafe) {
       posts.removeWhere((post) => post.rating == 's');
@@ -78,33 +76,97 @@ class Szurubooru extends Booru {
 
   @override
   Future<List<Tag>> requestTags(String tag) async {
-    if (tag.length < 3) {
-      return [];
-    }
-    tagCache.firstWhere((element) => element.name == tag);
-
-    final request = '$boardUrl/tag.json?name=$tag&limit=0';
-
-    logD(request);
-    var res = await dio.get<List<dynamic>>(request,
-        options: Options(
-          headers: <String, String>{
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ));
-    var tags = (res.data as List<dynamic>)
-        .map((dynamic x) =>
-            SzurubooruTag.fromJson(boardUrl, x as Map<String, dynamic>))
-        .toList();
-    var copy = tags.toList();
-    copy.removeWhere((element) => element.name.startsWith(tag));
-    tags.removeWhere((element) => !element.name.startsWith(tag));
-    return tags + copy;
+    throw UnimplementedError();
   }
 
   @override
-  Future<Color> requestTagColor(String name) async {
-    return tagCache.firstWhere((element) => element.name == name).color;
+  Future<void> savePost(Post post) {
+    return _createPost(
+      post.fileUrl,
+      post.tags,
+      post.rating,
+      post.source,
+      post.board,
+      post.id,
+    );
+  }
+
+  @override
+  Future<void> deletePost(Post post) async {
+    final szuruPost = post as SzurubooruPost;
+
+    final data = <String, dynamic>{'version': szuruPost.version};
+    final path = '/api/post/' + post.id.toString();
+    logD('Delete ' + post.toString());
+    await dio.delete<void>(path, data: data);
+  }
+
+  Future<Response<Map<String, dynamic>>> _getRequest(String request) async {
+    try {
+      return dio.get<Map<String, dynamic>>(request);
+    } on DioError catch (dioError) {
+      logE(dioError.response.toString());
+      rethrow;
+    }
+  }
+
+  Future<Response<Map<String, dynamic>>> _postRequest(
+    String path,
+    dynamic data,
+  ) async {
+    try {
+      logD('Create ' + path + ' data ' + data.toString());
+      return await dio.post<Map<String, dynamic>>(path, data: data);
+    } on DioError catch (dioError) {
+      if (dioError.type == DioErrorType.response) {
+        logD('req ' + path + ' data: ' + data.toString());
+        logD('rsp ' + dioError.response.toString());
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _createTag(String name, int category) async =>
+      _postRequest('/api/tags', <String, dynamic>{
+        'names': [name],
+        'category': category
+      });
+
+  Future<bool> _hasTag(String name) async {
+    var res = await _getRequest('/api/tags?query=name:$name');
+    var data = res.data as Map<String, dynamic>;
+    return (data['total'] as int) > 0;
+  }
+
+  Future<void> _createPost(
+    String fileUrl,
+    List<Tag> tags,
+    String rating,
+    String? source,
+    String board,
+    int boardId,
+  ) async {
+    var szuruRating = 'unsafe';
+    if (rating == 's') {
+      szuruRating = 'safe';
+    } else if (rating == 'q') {
+      szuruRating = 'sketchy';
+    }
+    for (final tag in tags) {
+      if (!await _hasTag(tag.name)) {
+        await _createTag(tag.name, await tag.type);
+      }
+    }
+    final boardName = (board.replaceAll(RegExp('https?://'), '').replaceAll('/', ''));
+    final originTag = '${boardName}_$boardId';
+    final tagList = tags.map((e) => e.name).toList()..add(originTag);
+    final data = <String, dynamic>{
+      'tags': tagList,
+      'contentUrl': fileUrl,
+      'safety': szuruRating,
+      'source': source
+    };
+
+    await _postRequest('/api/posts', data);
   }
 }

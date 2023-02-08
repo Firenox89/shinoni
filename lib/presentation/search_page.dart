@@ -36,7 +36,7 @@ class _SearchPageState extends State<SearchPage> {
                 return ListTile(
                   title: Text(
                     tag.name,
-                    style: TextStyle(color: tag.color),
+                    style: TextStyle(color: Color(0xFFEE8887)),
                   ),
                 );
               },
@@ -52,7 +52,7 @@ class _SearchPageState extends State<SearchPage> {
               ),
             ),
             ...context.db.getAllFavTags().map(
-                  (e) => TagLabel(e, context.boardDelegator),
+                  (e) => TagLabel(OfflineTag(e, 0)),
                 )
           ],
         ),

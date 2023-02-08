@@ -153,6 +153,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.17.0"
+  confirm_dialog:
+    dependency: "direct main"
+    description:
+      name: confirm_dialog
+      sha256: "1f80c874398fec802cbd25e516a0647279524b8ea1223dd5c3bf13f39e7238f4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   convert:
     dependency: transitive
     description:
@@ -193,6 +201,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.6"
+  dio_throttler:
+    dependency: "direct main"
+    description:
+      name: dio_throttler
+      sha256: "8025c2cbf46e789e1150bbe6c775b58d9c3c56656d7d1ca6c601ef0319923f77"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   fake_async:
     dependency: transitive
     description:
@@ -424,6 +440,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  loop_page_view:
+    dependency: "direct main"
+    description:
+      name: loop_page_view
+      sha256: "02d4a6e9e5bcb1ae4ad61985b584ad246f08fd37fa397010a2c5661406b82840"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   matcher:
     dependency: transitive
     description:
@@ -456,6 +480,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.4"
+  mutex:
+    dependency: transitive
+    description:
+      name: mutex
+      sha256: "03116a4e46282a671b46c12de649d72c0ed18188ffe12a8d0fc63e83f4ad88f4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.1"
   nested:
     dependency: transitive
     description:

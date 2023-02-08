@@ -72,23 +72,26 @@ class _SettingsPageState extends State<SettingsPage> {
     return Column(
         children: state.boardList
             .map<Widget>(
-              (e) => GestureDetector(
-                onTap: () {
-                  bloc.add(SelectBoardEvent(e.baseUrl));
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Text(e.baseUrl),
-                      ElevatedButton(
-                          onPressed: () {
-                            bloc.add(RemoveBoardEvent(e.baseUrl));
-                          },
-                          child: Text('Remove')),
-                    ],
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  ),
+              (e) => Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    ElevatedButton(
+                        onPressed: () {
+                          bloc.add(SelectBoardEvent(e.baseUrl));
+                        },
+                        child: Text('Select')),
+                    Text(e.baseUrl),
+                    ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.yellow),
+                        onPressed: () {
+                          bloc.add(RemoveBoardEvent(e.baseUrl));
+                        },
+                        child: Text('Remove')),
+                  ],
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 ),
               ),
             )

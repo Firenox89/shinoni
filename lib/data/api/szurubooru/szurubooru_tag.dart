@@ -5,12 +5,10 @@ import '../booru.dart';
 class SzurubooruTag extends Tag {
   final String board;
   final String name;
-  final int type;
-
-  @override
-  Color get color => getColorForType(type);
+  final int loadedType;
+  Future<int> get type => Future.value(loadedType);
 
   SzurubooruTag.fromJson(this.board, Map<String, dynamic> json)
       : name = json['names'][0] as String,
-        type = int.parse(json['category'] as String);
+        loadedType = int.parse(json['category'] as String);
 }

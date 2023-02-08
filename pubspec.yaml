@@ -22,6 +22,9 @@ dependencies:
   path_provider: ^2.0.9
   shared_preferences: ^2.0.13
   yaru: ^0.0.9
+  loop_page_view: ^1.2.0
+  dio_throttler: ^0.1.0
+  confirm_dialog: ^1.0.1
 
 dev_dependencies:
   flutter_test:

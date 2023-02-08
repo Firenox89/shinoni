@@ -20,24 +20,18 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
   NavigationBloc(this.prefs, this.db, this.boardDelegator)
       : super(NavigationInitial()) {
     on<NavigationEvent>((event, emit) async {
+      var handled = await _handleSettingsEvents(event, emit);
+      if (!handled) {
+        handled = await _handlePostEvents(event, emit);
+      }
+      if (handled) {
+        return;
+      }
       if (event is OpenPosts) {
         emit(Loading('Loading Posts', 0));
         emit(await _loadFistPage());
       } else if (event is OpenSearch) {
         emit(SearchState());
-      } else if (event is OpenSettings) {
-        emit(SettingsState(db.getBoardList()));
-      } else if (event is AddBoardEvent) {
-        db.addBoard(
-            BoardData(event.type, event.url, login: event.login, pw: event.pw));
-        emit(SettingsState(db.getBoardList()));
-      } else if (event is SelectBoardEvent) {
-        emit(Loading('Loading Posts', 0));
-        boardDelegator.select(event.boardUrl);
-        prefs.setString('selectedBoard', event.boardUrl);
-        emit(await _loadFistPage());
-      } else if (event is RemoveBoardEvent) {
-        db.removeBoard(event.boardUrl);
       } else if (event is SearchEvent) {
         NavigationState? lastState;
         if (state is PostDetailsState) {
@@ -48,11 +42,6 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
         if ((state as CanGoBack).lastState != null) {
           emit((state as CanGoBack).lastState!);
         }
-      } else if (event is OpenPostDetails) {
-        final cState = state as PostPageLoaded;
-        cState.scrollOffset = event.scrollOffset;
-        emit(PostDetailsState(
-            state.title, cState.postList, event.postIndex, state));
       }
     });
   }
@@ -67,8 +56,53 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
       () => boardDelegator.requestNextPage(tag: tag),
       3,
     );
-    return PostPageLoaded('yande.re $tag', list, prevState,
+    return PostPageLoaded('${boardDelegator.boardUrl} $tag', list, prevState,
         scrollOffset: scrollOffset);
+  }
+
+  Future<bool> _handlePostEvents(
+    NavigationEvent event,
+    Emitter<NavigationState> emit,
+  ) async {
+    if (event is OpenPostDetails) {
+      final cState = state as PostPageLoaded;
+      cState.scrollOffset = event.scrollOffset;
+      emit(PostDetailsState(
+        state.title,
+        cState.postList,
+        event.postIndex,
+        state,
+        boardDelegator.canSave,
+        boardDelegator.canDelete,
+      ));
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> _handleSettingsEvents(
+    NavigationEvent event,
+    Emitter<NavigationState> emit,
+  ) async {
+    if (event is OpenSettings) {
+      emit(SettingsState(db.getBoardList()));
+      return true;
+    } else if (event is AddBoardEvent) {
+      db.addBoard(
+          BoardData(event.type, event.url, login: event.login, pw: event.pw));
+      emit(SettingsState(db.getBoardList()));
+    } else if (event is SelectBoardEvent) {
+      emit(Loading('Loading Posts', 0));
+      boardDelegator.select(event.boardUrl);
+      prefs.setString('selectedBoard', event.boardUrl);
+      emit(await _loadFistPage());
+      return true;
+    } else if (event is RemoveBoardEvent) {
+      await db.removeBoard(event.boardUrl);
+      emit(SettingsState(db.getBoardList()));
+      return true;
+    }
+    return false;
   }
 }
 
@@ -109,6 +143,10 @@ class SelfPopulatingList<T> {
       return get(index);
     }
     return baseList[index];
+  }
+
+  void removeAt(int index) {
+    baseList.removeAt(index);
   }
 
   Future<void> populate() async {

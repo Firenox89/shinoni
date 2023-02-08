@@ -4,25 +4,26 @@ import '../booru.dart';
 
 class SzurubooruPost extends Post {
   final String board;
-  late int id;
-  late List<SzurubooruTag> szuruTags;
-  late int fileSize;
+  late List<Tag> tags;
   late String fileUrl;
   late String previewUrl;
-  late int previewWidth;
-  late int previewHeight;
-  late String sampleUrl;
-  late int sampleWidth;
-  late int sampleHeight;
   late String rating;
-  late int width;
+  late String sampleUrl;
+  late String source;
+  late int fileSize;
   late int height;
-
-  List<String> get tags => szuruTags.map((e) => e.name).toList();
+  late int id;
+  late int previewHeight;
+  late int previewWidth;
+  late int sampleHeight;
+  late int sampleWidth;
+  late int width;
+  late int version;
 
   SzurubooruPost.fromJson(this.board, Map<String, dynamic> json)
       : id = json['id'] as int,
-        szuruTags = (json['tags'] as List<dynamic>)
+        source = json['source'] as String,
+        tags = (json['tags'] as List<dynamic>)
             .map((dynamic e) =>
                 SzurubooruTag.fromJson(board, e as Map<String, dynamic>))
             .toList(),
@@ -36,5 +37,6 @@ class SzurubooruPost extends Post {
         sampleHeight = json['canvasHeight'] as int,
         rating = json['safety'] as String,
         height = json['canvasHeight'] as int,
-        width = json['canvasWidth'] as int;
+        width = json['canvasWidth'] as int,
+        version = json['version'] as int;
 }

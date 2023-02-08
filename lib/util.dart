@@ -5,11 +5,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shinoni/data/api/board_delegator.dart';
 import 'package:shinoni/logic/navigation_bloc.dart';
+import 'package:shinoni/logic/post_bloc.dart';
 
 import 'data/db/db.dart';
 
 extension BuilderContextExt on BuildContext {
   NavigationBloc get mainBloc => BlocProvider.of<NavigationBloc>(this);
+  PostBloc get dataBloc => BlocProvider.of<PostBloc>(this);
   BoardDelegator get boardDelegator => RepositoryProvider.of<BoardDelegator>(this);
   DB get db => RepositoryProvider.of<DB>(this);
 }

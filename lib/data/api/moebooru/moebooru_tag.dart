@@ -1,24 +1,25 @@
-import 'dart:ui';
-
 import '../booru.dart';
 
 class MoebooruTag extends Tag {
+  @override
   final String name;
-  final String board;
-  final int id;
-  final int count;
-  final int type;
-  final bool ambiguous;
-  final Color color;
+  int? loadedType;
+  Function? typeLoader;
 
-  MoebooruTag(this.name, this.board, this.id, this.count, this.type, this.ambiguous)
-      : color = getColorForType(type);
+  @override
+  Future<int> get type => getType();
 
-  MoebooruTag.fromJson(this.board, Map<String, dynamic> json)
-      : id = json['id'] as int,
-        name = json['name'] as String,
-        count = json['count'] as int,
-        type = json['type'] as int,
-        ambiguous = json['ambiguous'] as bool,
-        color = getColorForType(json['type'] as int);
+  MoebooruTag(this.name, this.typeLoader);
+
+  MoebooruTag.fromJson(Map<String, dynamic> json)
+      : name = json['name'] as String,
+        loadedType = json['type'] as int;
+
+  Future<int> getType() async {
+    if (loadedType != null) {
+      return Future.value(loadedType!);
+    } else {
+      return (await typeLoader!.call(name)) as int;
+    }
+  }
 }

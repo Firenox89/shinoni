@@ -43,7 +43,8 @@ class PostPageLoaded extends NavigationState implements CanGoBack {
   final SelfPopulatingList<Post> postList;
   final int columnCount = 3;
 
-  PostPageLoaded(this.title, this.postList, this.lastState, {this.scrollOffset = 0});
+  PostPageLoaded(this.title, this.postList, this.lastState,
+      {this.scrollOffset = 0});
 }
 
 class SearchState extends NavigationState {
@@ -75,11 +76,20 @@ class PostDetailsState extends NavigationState implements CanGoBack {
   @override
   final NavigationState lastState;
 
+  final bool canSave;
+
+  final bool canDelete;
+
   final int initialIndex;
 
   final SelfPopulatingList<Post> postList;
 
-  PostDetailsState(this.title, this.postList, this.initialIndex, this.lastState);
-
+  PostDetailsState(
+    this.title,
+    this.postList,
+    this.initialIndex,
+    this.lastState,
+    this.canSave,
+    this.canDelete,
+  );
 }
-
