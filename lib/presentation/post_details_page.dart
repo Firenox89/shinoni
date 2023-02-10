@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shinoni/logic/post_bloc.dart';
+import 'package:shinoni/presentation/tag_text.dart';
 
 import '../data/api/booru.dart';
 import '../logic/navigation_bloc.dart';
 import '../util.dart';
 import 'package:confirm_dialog/confirm_dialog.dart';
 
-class PostDetailsPage extends StatelessWidget {
+class PostDetailsPage extends StatefulWidget {
   final SelfPopulatingList<Post> postList;
   final int startIndex;
 
@@ -22,64 +23,95 @@ class PostDetailsPage extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<PostDetailsPage> createState() => _PostDetailsPageState(
+        postList,
+        startIndex,
+        canSave,
+        canDelete,
+      );
+}
+
+class _PostDetailsPageState extends State<PostDetailsPage> {
+  final SelfPopulatingList<Post> postList;
+  final int startIndex;
+
+  final bool canSave;
+  final bool canDelete;
+
+  Post? post;
+
+  _PostDetailsPageState(
+    this.postList,
+    this.startIndex,
+    this.canSave,
+    this.canDelete,
+  ) {
+    _loadPost();
+  }
+
+  Future<void> _loadPost() async {
+    post = await postList.get(startIndex);
+    setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          Image.network(
-            postList.getSync(startIndex).sampleUrl,
-            fit: BoxFit.fitWidth,
-            frameBuilder: (
-              BuildContext context,
-              Widget child,
-              int? frame,
-              bool wasSynchronouslyLoaded,
-            ) {
-              if (frame == null) {
-                return Image.network(
-                  postList.getSync(startIndex).previewUrl,
+      child: post == null
+          ? Container()
+          : Column(
+              children: [
+                Image.network(
+                  post!.sampleUrl,
                   fit: BoxFit.fitWidth,
-                  width: postList.getSync(startIndex).sampleWidth.toDouble(),
-                  height: postList.getSync(startIndex).sampleHeight.toDouble(),
-                );
-              } else {
-                return child;
-              }
-            },
-          ),
-          !canDelete && canSave ? _buildDownloadView(context) : Container(),
-          canDelete ? _buildDeleteView(context) : Container(),
-          _buildTagView(context),
-        ],
-      ),
+                  frameBuilder: (
+                    BuildContext context,
+                    Widget child,
+                    int? frame,
+                    bool wasSynchronouslyLoaded,
+                  ) {
+                    if (frame == null) {
+                      return Image.network(
+                        post!.previewUrl,
+                        fit: BoxFit.fitWidth,
+                        width: post!.sampleWidth.toDouble(),
+                        height: post!.sampleHeight.toDouble(),
+                      );
+                    } else {
+                      return child;
+                    }
+                  },
+                ),
+                !canDelete && canSave
+                    ? _buildDownloadView(context)
+                    : Container(),
+                canDelete ? _buildDeleteView(context) : Container(),
+                _buildTagView(context),
+              ],
+            ),
     );
   }
 
-  Widget _buildDownloadView(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton(
-                onPressed: () {
-                  context.dataBloc
-                      .add(SavePostEvent(postList.getSync(startIndex)));
-                },
-                child: Text('Download')),
-          ),
-          Text('FileSize: ' +
-              (postList.getSync(startIndex).fileSize / (1024 * 1024))
-                  .toStringAsFixed(2) +
-              ' MB'),
-          Text(
-              'Size: ${postList.getSync(startIndex).width}x${postList.getSync(startIndex).height}'),
-        ],
-      ),
-    );
-  }
+  Widget _buildDownloadView(BuildContext context) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                  onPressed: () {
+                    context.dataBloc.add(SavePostEvent(post!));
+                  },
+                  child: Text('Download')),
+            ),
+            Text('FileSize: ' +
+                (post!.fileSize / (1024 * 1024)).toStringAsFixed(2) +
+                ' MB'),
+            Text('Size: ${post!.width}x${post!.height}'),
+          ],
+        ),
+      );
 
   Widget _buildDeleteView(BuildContext context) {
     return Padding(
@@ -97,8 +129,7 @@ class PostDetailsPage extends StatelessWidget {
                   if (await confirm(context,
                       content: Text('Really delete it?'),
                       textOK: Text('Yes'))) {
-                    context.dataBloc
-                        .add(DeletePostEvent(postList.getSync(startIndex)));
+                    context.dataBloc.add(DeletePostEvent(post!));
                     postList.removeAt(startIndex);
                   }
                 },
@@ -110,14 +141,10 @@ class PostDetailsPage extends StatelessWidget {
   }
 
   Widget _buildTagView(BuildContext context) {
-    final left = postList
-        .getSync(startIndex)
-        .tags
-        .sublist(0, postList.getSync(startIndex).tags.length ~/ 2);
-    final right = postList
-        .getSync(startIndex)
-        .tags
-        .sublist(postList.getSync(startIndex).tags.length ~/ 2);
+    final left =
+        postList.getSync(startIndex).tags.sublist(0, post!.tags.length ~/ 2);
+    final right =
+        postList.getSync(startIndex).tags.sublist(post!.tags.length ~/ 2);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
@@ -157,37 +184,24 @@ class TagLabel extends StatefulWidget {
 
 class _TagLabelState extends State<TagLabel> {
   final Tag tag;
-  Color? color;
   bool isFav = false;
 
-  _TagLabelState(this.tag) {
-    _loadData();
-  }
-
-  void _loadData() async {
-    color = await tag.color;
-    if (mounted) {
-      setState(() {});
-    }
-  }
+  _TagLabelState(this.tag);
 
   @override
   Widget build(BuildContext context) {
-    final Color textColor = color != null ? color! : Colors.white;
-
     isFav = context.db.isFavTag(tag.name);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: GestureDetector(
-            onTap: () {
-              context.mainBloc.add(SearchEvent(tag.name));
-            },
-            child: Text(tag.name,
-                style: TextStyle(color: textColor, fontSize: 20)),
+        GestureDetector(
+          onTap: () {
+            context.mainBloc.add(SearchEvent(tag.name));
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TagText(tag, size: 20),
           ),
         ),
         GestureDetector(

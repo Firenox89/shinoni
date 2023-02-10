@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shinoni/data/api/board_delegator.dart';
 import 'package:shinoni/data/db/db.dart';
+import 'package:shinoni/util.dart';
 
 import '../data/api/booru.dart';
 
@@ -27,11 +28,17 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
       if (handled) {
         return;
       }
-      if (event is OpenPosts) {
+      if (event is OpenHome) {
+        boardDelegator.homeIndex = prefs.homeBoardIndex;
+        boardDelegator.isInHome = true;
+        emit(Loading('Loading Posts', 0));
+        emit(await _loadFistPage(isHome: true));
+      } else if (event is OpenPosts) {
+        boardDelegator.isInHome = false;
         emit(Loading('Loading Posts', 0));
         emit(await _loadFistPage());
       } else if (event is OpenSearch) {
-        emit(SearchState());
+        emit(SearchState(boardDelegator.boardUrl));
       } else if (event is SearchEvent) {
         NavigationState? lastState;
         if (state is PostDetailsState) {
@@ -47,6 +54,7 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
   }
 
   Future<PostPageLoaded> _loadFistPage({
+    bool isHome = false,
     String tag = '',
     NavigationState? prevState,
     double scrollOffset = 0,
@@ -56,7 +64,7 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
       () => boardDelegator.requestNextPage(tag: tag),
       3,
     );
-    return PostPageLoaded('${boardDelegator.boardUrl} $tag', list, prevState,
+    return PostPageLoaded(isHome, '${boardDelegator.boardUrl} $tag', list, prevState,
         scrollOffset: scrollOffset);
   }
 
@@ -85,21 +93,28 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
     Emitter<NavigationState> emit,
   ) async {
     if (event is OpenSettings) {
-      emit(SettingsState(db.getBoardList()));
+      emit(SettingsState(db.getBoardList(), prefs.homeBoardIndex));
       return true;
     } else if (event is AddBoardEvent) {
       db.addBoard(
           BoardData(event.type, event.url, login: event.login, pw: event.pw));
-      emit(SettingsState(db.getBoardList()));
+      emit(SettingsState(db.getBoardList(), prefs.homeBoardIndex));
     } else if (event is SelectBoardEvent) {
       emit(Loading('Loading Posts', 0));
       boardDelegator.select(event.boardUrl);
       prefs.setString('selectedBoard', event.boardUrl);
       emit(await _loadFistPage());
       return true;
+    } else if (event is SetHomeBoardEvent) {
+      final idx = boardDelegator.indexOfBoard(event.boardUrl);
+      prefs.homeBoardIndex = idx;
+      boardDelegator.homeIndex = idx;
+      boardDelegator.isInHome = true;
+      add(OpenHome());
+      return true;
     } else if (event is RemoveBoardEvent) {
       await db.removeBoard(event.boardUrl);
-      emit(SettingsState(db.getBoardList()));
+      emit(SettingsState(db.getBoardList(), prefs.homeBoardIndex));
       return true;
     }
     return false;

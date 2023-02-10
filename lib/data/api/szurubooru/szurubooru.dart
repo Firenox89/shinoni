@@ -52,7 +52,7 @@ class Szurubooru extends Booru {
   Future<List<SzurubooruPost>> requestPage(int page, String tags) async {
     final request = '/api/posts?limit=$limit' +
         ((page > 1) ? '&offset=${page * limit}' : '') +
-        ((tags != '') ? '&tags=$tags' : '');
+        ((tags != '') ? '&query=$tags' : '');
 
     logD(request);
 

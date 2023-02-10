@@ -71,27 +71,54 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildBoardList(NavigationBloc bloc, SettingsState state) {
     return Column(
         children: state.boardList
+            .asMap()
+            .entries
             .map<Widget>(
               (e) => Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    ElevatedButton(
-                        onPressed: () {
-                          bloc.add(SelectBoardEvent(e.baseUrl));
-                        },
-                        child: Text('Select')),
-                    Text(e.baseUrl),
-                    ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.yellow),
-                        onPressed: () {
-                          bloc.add(RemoveBoardEvent(e.baseUrl));
-                        },
-                        child: Text('Remove')),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                      child:
+                          Container(width: 300, child: Text(e.value.baseUrl)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                      child: ElevatedButton(
+                          onPressed: () {
+                            bloc.add(SelectBoardEvent(e.value.baseUrl));
+                          },
+                          child: Text('Select')),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                      child: ElevatedButton(
+                          onPressed: e.key == state.homeBoardIndex
+                              ? null
+                              : () {
+                                  bloc.add(SetHomeBoardEvent(e.value.baseUrl));
+                                },
+                          style: e.key == state.homeBoardIndex
+                              ? ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.yellow)
+                              : ElevatedButton.styleFrom(),
+                          child: Text('Set as Home')),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                      child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.yellow),
+                          onPressed: () {
+                            bloc.add(RemoveBoardEvent(e.value.baseUrl));
+                          },
+                          child: Text('Remove')),
+                    ),
                   ],
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 ),
               ),
             )

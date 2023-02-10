@@ -12,12 +12,15 @@ class AppScaffold extends StatelessWidget {
   void handleNavTab(int index, NavigationBloc mainBloc) {
     switch (index) {
       case 0:
-        mainBloc.add(OpenPosts());
+        mainBloc.add(OpenHome());
         break;
       case 1:
-        mainBloc.add(OpenSearch());
+        mainBloc.add(OpenPosts());
         break;
       case 2:
+        mainBloc.add(OpenSearch());
+        break;
+      case 3:
         mainBloc.add(OpenSettings());
         break;
     }
@@ -40,11 +43,15 @@ class AppScaffold extends StatelessWidget {
           onTap: (index) => handleNavTab(index, context.mainBloc),
           items: [
             BottomNavigationBarItem(
+              label: 'Home',
+              icon: Icon(Icons.home),
+            ),
+            BottomNavigationBarItem(
               label: 'Posts',
               icon: Icon(Icons.image),
             ),
             BottomNavigationBarItem(
-              label: 'Search',
+              label: 'Tag Search',
               icon: Icon(Icons.search),
             ),
             BottomNavigationBarItem(

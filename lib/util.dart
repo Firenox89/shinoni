@@ -19,14 +19,17 @@ extension BuilderContextExt on BuildContext {
 const keyRatingSafe = 'RatingSafe';
 const keyRatingQuestionable = 'RatingQuestionable';
 const keyRatingExplicit = 'RatingExplicit';
+const keyHomeBoardIndex = 'HomeBoardIndex';
 
 extension SharedPrefsExt on SharedPreferences {
   bool get inclSafe => getBool(keyRatingSafe) ?? true;
   bool get inclQuestionable => getBool(keyRatingQuestionable) ?? false;
   bool get inclExplicit => getBool(keyRatingExplicit) ?? false;
+  int get homeBoardIndex => getInt(keyHomeBoardIndex) ?? 0;
   set inclSafe (bool value) => setBool(keyRatingSafe, value);
   set inclQuestionable (bool value) => setBool(keyRatingQuestionable, value);
   set inclExplicit (bool value) => setBool(keyRatingExplicit, value);
+  set homeBoardIndex (int value) => setInt(keyHomeBoardIndex, value);
 }
 
 void logD(String msg) {

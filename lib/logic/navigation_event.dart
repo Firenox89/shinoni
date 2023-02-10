@@ -5,6 +5,8 @@ abstract class NavigationEvent {}
 
 abstract class BottomBarNavEvents extends NavigationEvent {}
 
+class OpenHome extends BottomBarNavEvents {}
+
 class OpenPosts extends BottomBarNavEvents {}
 
 class OpenSearch extends BottomBarNavEvents {}
@@ -32,6 +34,12 @@ class SelectBoardEvent extends NavigationEvent {
   final String boardUrl;
 
   SelectBoardEvent(this.boardUrl);
+}
+
+class SetHomeBoardEvent extends NavigationEvent {
+  final String boardUrl;
+
+  SetHomeBoardEvent(this.boardUrl);
 }
 
 class RemoveBoardEvent extends NavigationEvent {

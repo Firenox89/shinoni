@@ -28,14 +28,12 @@ class Moebooru extends Booru {
 
   @override
   Future<List<MoebooruPost>> requestFirstPage({String tag = ''}) {
-    logD('Request first page');
     currentPage = 0;
     return requestNextPage(tag: tag);
   }
 
   @override
   Future<List<MoebooruPost>> requestNextPage({String tag = ''}) {
-    logD('Request next page');
     return requestPage(++currentPage, tag);
   }
 
